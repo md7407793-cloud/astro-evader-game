@@ -170,53 +170,61 @@
                 let rectPlayer = player.getBoundingClientRect();
                 let rectAst = ast.getBoundingClientRect();
 
-                if (!(rectPlayer.right < rectAst.left || 
-                      rectPlayer.left > rectAst.right || 
-                      rectPlayer.bottom < rectAst.top || 
-                      rectPlayer.top > rectAst.bottom)) {
-                    endGame();
-                }
-
-                if (currentTop > container.clientHeight) {
-                    ast.remove();
-                    asteroides.splice(i, 1);
-                }
+                if (!(rectPlayer.right - 5 < rectAst.left || 
+              rectPlayer.left + 5 > rectAst.right || 
+              rectPlayer.bottom - 5 < rectAst.top || 
+              rectPlayer.top + 5 > rectAst.bottom)) {
+            if (currentTop > 40) {
+                endGame();
             }
         }
 
-        function endGame() {
-            gameActive = false;
-            clearInterval(gameLoopInterval);
-            clearInterval(spawnInterval);
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-            finalScoreDisplay.textContent = score;
-            gameOverScreen.style.display = 'flex';
+        if (currentTop > container.clientHeight) {
+            ast.remove();
+            asteroides.splice(i, 1);
         }
+    }
+}
 
-        // Simulación comercial del anuncio
-        function simulateAdAndRevive() {
-            alert("Loading Adsgram Rewarded Video Ad (15s)... 🎬");
-            gameOverScreen.style.display = 'none';
-            asteroides.forEach(a => a.remove());
-            asteroides = [];
-            playerX = 50;
-            updatePlayer();
-            
-            gameActive = true;
-            gameLoopInterval = setInterval(updateGame, 50);
-            spawnInterval = setInterval(createAsteroid, 900);
-        }
+function endGame() {
+    gameActive = false;
+    clearInterval(gameLoopInterval);
+    clearInterval(spawnInterval);
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+    finalScoreDisplay.textContent = score;
+    gameOverScreen.style.display = 'flex';
+}
 
-        function restartGame() {
-            score = 0;
-            gameOverScreen.style.display = 'none';
-            asteroides.forEach(a => a.remove());
-            asteroides = [];
-            playerX = 50;
-            updatePlayer();
-            gameActive = true;
-            gameLoopInterval = setInterval(updateGame, 50);
-            spawnInterval = setInterval(createAsteroid, 900);
+function simulateAdAndRevive() {
+    alert("Loading Adsgram Rewarded Video Ad (15s)... 🎬");
+    gameOverScreen.style.display = 'none';
+    asteroides.forEach(a => a.remove());
+    asteroides = [];
+    playerX = 50;
+    updatePlayer();
+    
+    gameActive = true;
+    gameLoopInterval = setInterval(updateGame, 50);
+    spawnInterval = setInterval(createAsteroid, 900);
+}
+
+function restartGame() {
+    score = 0;
+    gameOverScreen.style.display = 'none';
+    asteroides.forEach(a => a.remove());
+    asteroides = [];
+    playerX = 50;
+    updatePlayer();
+    gameActive = true;
+    gameLoopInterval = setInterval(updateGame, 50);
+    spawnInterval = setInterval(createAsteroid, 900);
+}
+
+gameLoopInterval = setInterval(updateGame, 50);
+spawnInterval = setInterval(createAsteroid, 900);
+</script>
+</body>
+</html>
         }
 
         gameLoopInterval = setInterval(updateGame, 50);
