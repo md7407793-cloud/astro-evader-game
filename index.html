@@ -28,22 +28,17 @@
         <button class="btn" id="left-btn">◀️ LEFT</button>
         <button class="btn" id="right-btn">RIGHT ▶️</button>
     </div>
-
-    <!-- START SCREEN (YOUR IDEA) -->
     <div id="start-screen">
         <h2>🚀 ASTRO EVADER 🚀</h2>
         <p>Avoid the asteroids and survive!</p>
         <button class="action-btn" onclick="startGameOfficial()">START GAME</button>
     </div>
-
-    <!-- GAME OVER SCREEN -->
     <div id="game-over-screen">
         <h2>💥 CRASHED! 💥</h2>
         <p>Final Score: <span id="final-score">0</span></p>
         <button class="action-btn revive-btn" onclick="simulateAdAndRevive()">🎬 WATCH VIDEO TO REVIVE</button>
-        <button style="background:none; border:none; color:#aaa; margin-top:15px; cursor:pointer; font-size: 14px;" onclick="restartGame()">Restart (Reset Score)</button>
+        <button style="background:none; border:none; color:#aaa; margin-top:15px; cursor:pointer; font-size: 14px;" onclick="restartGame()">Restart</button>
     </div>
-
     <script>
         const tg = window.Telegram.WebApp; if (tg) tg.expand();
         const player = document.getElementById('player');
@@ -53,60 +48,16 @@
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalScoreDisplay = document.getElementById('final-score');
         let playerX = 50, score = 0, gameActive = false, asteroides = [], gameLoopInterval, spawnInterval;
-
         document.getElementById('left-btn').addEventListener('click', () => { if (!gameActive) return; if (playerX > 15) playerX -= 15; updatePlayer(); triggerHaptic(); });
         document.getElementById('right-btn').addEventListener('click', () => { if (!gameActive) return; if (playerX < 85) playerX += 15; updatePlayer(); triggerHaptic(); });
         function updatePlayer() { player.style.left = playerX + '%'; }
         function triggerHaptic() { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
-
-        function startGameOfficial() {
-            startScreen.style.display = 'none';
-            player.style.display = 'block';
-            playerX = 50; updatePlayer();
-            gameActive = true; score = 0; scoreDisplay.textContent = '0';
-            gameLoopInterval = setInterval(updateGame, 50);
-            spawnInterval = setInterval(createAsteroid, 900);
-            triggerHaptic();
-        }
-
-        function createAsteroid() {
-            if (!gameActive) return;
-            const asteroide = document.createElement('div');
-            asteroide.className = 'asteroid'; asteroide.textContent = '☄️'; asteroide.style.top = '0px';
-            asteroide.style.left = Math.floor(Math.random() * 80) + 10 + '%';
-            container.appendChild(asteroide); asteroides.push(asteroide);
-        }
-
-        function updateGame() {
-            if (!gameActive) return; score++; scoreDisplay.textContent = score;
-            for (let i = asteroides.length - 1; i >= 0; i--) {
-                let ast = asteroides[i]; let currentTop = parseInt(ast.style.top);
-                ast.style.top = (currentTop + 6) + 'px';
-                let rectPlayer = player.getBoundingClientRect(); let rectAst = ast.getBoundingClientRect();
-                if (!(rectPlayer.right - 4 < rectAst.left || rectPlayer.left + 4 > rectAst.right || rectPlayer.bottom - 4 < rectAst.top || rectPlayer.top + 4 > rectAst.bottom)) {
-                    if (currentTop > 40) { endGame(); return; }
-                }
-                if (currentTop > container.clientHeight) { ast.remove(); asteroides.splice(i, 1); }
-            }
-        }
-
-        function endGame() {
-            gameActive = false; clearInterval(gameLoopInterval); clearInterval(spawnInterval);
-            if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-            finalScoreDisplay.textContent = score; gameOverScreen.style.display = 'flex';
-        }
-
-        function simulateAdAndRevive() {
-            gameOverScreen.style.display = 'none'; asteroides.forEach(a => a.remove()); asteroides = [];
-            playerX = 50; updatePlayer(); gameActive = true;
-            gameLoopInterval = setInterval(updateGame, 50); spawnInterval = setInterval(createAsteroid, 900);
-        }
-
-        function restartGame() {
-            score = 0; gameOverScreen.style.display = 'none'; asteroides.forEach(a => a.remove()); asteroides = [];
-            playerX = 50; updatePlayer(); gameActive = true;
-            gameLoopInterval = setInterval(updateGame, 50); spawnInterval = setInterval(createAsteroid, 900);
-        }
+        function startGameOfficial() { document.getElementById('start-screen').style.display = 'none'; player.style.display = 'block'; playerX = 50; updatePlayer(); gameActive = true; score = 0; scoreDisplay.textContent = '0'; gameLoopInterval = setInterval(updateGame, 50); spawnInterval = setInterval(createAsteroid, 900); triggerHaptic(); }
+        function createAsteroid() { if (!gameActive) return; const asteroide = document.createElement('div'); asteroide.className = 'asteroid'; asteroide.textContent = '☄️'; asteroide.style.top = '0px'; asteroide.style.left = Math.floor(Math.random() * 80) + 10 + '%'; container.appendChild(asteroide); asteroides.push(asteroide); }
+        function updateGame() { if (!gameActive) return; score++; scoreDisplay.textContent = score; for (let i = asteroides.length - 1; i >= 0; i--) { let ast = asteroides[i]; let currentTop = parseInt(ast.style.top); ast.style.top = (currentTop + 6) + 'px'; let rectPlayer = player.getBoundingClientRect(); let rectAst = ast.getBoundingClientRect(); if (!(rectPlayer.right - 4 < rectAst.left || rectPlayer.left + 4 > rectAst.right || rectPlayer.bottom - 4 < rectAst.top || rectPlayer.top + 4 > rectAst.bottom)) { if (currentTop > 40) { endGame(); return; } } if (currentTop > container.clientHeight) { ast.remove(); asteroides.splice(i, 1); } } }
+        function endGame() { gameActive = false; clearInterval(gameLoopInterval); clearInterval(spawnInterval); if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error'); finalScoreDisplay.textContent = score; gameOverScreen.style.display = 'flex'; }
+        function simulateAdAndRevive() { gameOverScreen.style.display = 'none'; asteroides.forEach(a => a.remove()); asteroides = []; playerX = 50; updatePlayer(); gameActive = true; gameLoopInterval = setInterval(updateGame, 50); spawnInterval = setInterval(createAsteroid, 900); }
+        function restartGame() { score = 0; gameOverScreen.style.display = 'none'; asteroides.forEach(a => a.remove()); asteroides = []; playerX = 50; updatePlayer(); gameActive = true; gameLoopInterval = setInterval(updateGame, 50); spawnInterval = setInterval(createAsteroid, 900); }
     </script>
 </body>
 </html>
