@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Astro Evader 🚀</title>
+    <script src="https://telegram.org"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle, #101f32 0%, #060d15 100%);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 70vh;
+            background-color: rgba(255, 255, 255, 0.02);
+            border-bottom: 2px solid #2481cc;
+        }
+        #player {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 35px;
+            transform: translateX(-50%);
+            transition: left 0.1s ease-out;
+        }
+        .asteroid {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            font-size: 28px;
+        }
+        #ui-layer {
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        #score-display { color: #64b5f6; font-size: 32px; }
+        #controls {
+            display: flex;
+            width: 100vw;
+            height: 20vh;
+        }
+        .btn {
+            flex: 1;
+            background-color: rgba(36, 129, 204, 0.2);
+            border: 1px solid rgba(36, 129, 204, 0.4);
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active { background-color: rgba(36, 129, 204, 0.5); }
+        #game-over-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(6, 13, 21, 0.95);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .revive-btn {
+            background-color: #e53935;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">SCORE: <span id="score-display">0</span></div>
+    
+    <div id="game-container">
+        <div id="player">👨‍🚀</div>
+    </div>
+
+    <div id="controls">
+        <button class="btn" id="left-btn">◀️ LEFT</button>
+        <button class="btn" id="right-btn">RIGHT ▶️</button>
+    </div>
+
+    <div id="game-over-screen">
+        <h2>💥 CRASHED! 💥</h2>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button class="revive-btn" onclick="simulateAdAndRevive()">🎬 WATCH VIDEO TO REVIVE</button>
+        <button style="background:none; border:none; color:#aaa; margin-top:15px; cursor:pointer; font-size: 14px;" onclick="restartGame()">Restart (Reset Score)</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const player = document.getElementById('player');
+        const container = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let playerX = 50; 
+        let score = 0;
+        let gameActive = true;
+        let asteroides = [];
+        let gameLoopInterval;
+        let spawnInterval;
+
+        document.getElementById('left-btn').addEventListener('click', () => {
+            if (!gameActive) return;
+            if (playerX > 10) playerX -= 15;
+            updatePlayer();
+            triggerHaptic();
+        });
+
+        document.getElementById('right-btn').addEventListener('click', () => {
+            if (!gameActive) return;
+            if (playerX < 90) playerX += 15;
+            updatePlayer();
+            triggerHaptic();
+        });
+
+        function updatePlayer() {
+            player.style.left = playerX + '%';
+        }
+
+        function triggerHaptic() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function createAsteroid() {
+            if (!gameActive) return;
+            const asteroide = document.createElement('div');
+            asteroide.className = 'asteroid';
+            asteroide.textContent = '☄️';
+            asteroide.style.top = '0px';
+            asteroide.style.left = Math.floor(Math.random() * 85) + 5 + '%';
+            container.appendChild(asteroide);
+            asteroides.push(asteroide);
+        }
+
+        function updateGame() {
+            if (!gameActive) return;
+
+            score++;
+            scoreDisplay.textContent = score;
+
+            for (let i = asteroides.length - 1; i >= 0; i--) {
+                let ast = asteroides[i];
+                let currentTop = parseInt(ast.style.top);
+                ast.style.top = (currentTop + 6) + 'px';
+
+                let rectPlayer = player.getBoundingClientRect();
+                let rectAst = ast.getBoundingClientRect();
+
+                if (!(rectPlayer.right < rectAst.left || 
+                      rectPlayer.left > rectAst.right || 
+                      rectPlayer.bottom < rectAst.top || 
+                      rectPlayer.top > rectAst.bottom)) {
+                    endGame();
+                }
+
+                if (currentTop > container.clientHeight) {
+                    ast.remove();
+                    asteroides.splice(i, 1);
+                }
+            }
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(gameLoopInterval);
+            clearInterval(spawnInterval);
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        // Simulación comercial del anuncio
+        function simulateAdAndRevive() {
+            alert("Loading Adsgram Rewarded Video Ad (15s)... 🎬");
+            gameOverScreen.style.display = 'none';
+            asteroides.forEach(a => a.remove());
+            asteroides = [];
+            playerX = 50;
+            updatePlayer();
+            
+            gameActive = true;
+            gameLoopInterval = setInterval(updateGame, 50);
+            spawnInterval = setInterval(createAsteroid, 900);
+        }
+
+        function restartGame() {
+            score = 0;
+            gameOverScreen.style.display = 'none';
+            asteroides.forEach(a => a.remove());
+            asteroides = [];
+            playerX = 50;
+            updatePlayer();
+            gameActive = true;
+            gameLoopInterval = setInterval(updateGame, 50);
+            spawnInterval = setInterval(createAsteroid, 900);
+        }
+
+        gameLoopInterval = setInterval(updateGame, 50);
+        spawnInterval = setInterval(createAsteroid, 900);
+    </script>
+</body>
+</html>
