@@ -8,15 +8,17 @@
     <style>
         body { font-family: -apple-system, sans-serif; background: radial-gradient(circle, #101f32 0%, #060d15 100%); color: white; text-align: center; margin: 0; padding: 0; overflow: hidden; height: 100vh; user-select: none; }
         #game-container { position: relative; width: 100vw; height: 70vh; background-color: rgba(255, 255, 255, 0.02); border-bottom: 2px solid #2481cc; }
-        #player { position: absolute; bottom: 20px; left: 50%; width: 40px; height: 40px; font-size: 35px; transform: translateX(-50%); transition: left 0.1s ease-out; }
+        #player { position: absolute; bottom: 20px; left: 50%; width: 40px; height: 40px; font-size: 35px; transform: translateX(-50%); transition: left 0.1s ease-out; display: none; }
         .asteroid { position: absolute; width: 30px; height: 30px; font-size: 28px; }
         #ui-layer { padding: 15px; font-size: 20px; font-weight: bold; }
         #score-display { color: #64b5f6; font-size: 32px; }
         #controls { display: flex; width: 100vw; height: 20vh; }
         .btn { flex: 1; background-color: rgba(36, 129, 204, 0.2); border: 1px solid rgba(36, 129, 204, 0.4); color: white; font-size: 20px; font-weight: bold; outline: none; -webkit-tap-highlight-color: transparent; }
         .btn:active { background-color: rgba(36, 129, 204, 0.5); }
-        #game-over-screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(6, 13, 21, 0.95); flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        .revive-btn { background-color: #e53935; color: white; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(229, 57, 53, 0.4); }
+        #start-screen, #game-over-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(6, 13, 21, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        #game-over-screen { display: none; background-color: rgba(6, 13, 21, 0.95); }
+        .action-btn { background-color: #2481cc; color: white; border: none; padding: 16px 40px; font-size: 22px; font-weight: bold; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(36, 129, 204, 0.4); margin-top: 20px; }
+        .revive-btn { background-color: #e53935; box-shadow: 0 4px 15px rgba(229, 57, 53, 0.4); }
     </style>
 </head>
 <body>
@@ -26,25 +28,46 @@
         <button class="btn" id="left-btn">◀️ LEFT</button>
         <button class="btn" id="right-btn">RIGHT ▶️</button>
     </div>
+
+    <!-- START SCREEN (YOUR IDEA) -->
+    <div id="start-screen">
+        <h2>🚀 ASTRO EVADER 🚀</h2>
+        <p>Avoid the asteroids and survive!</p>
+        <button class="action-btn" onclick="startGameOfficial()">START GAME</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
     <div id="game-over-screen">
         <h2>💥 CRASHED! 💥</h2>
         <p>Final Score: <span id="final-score">0</span></p>
-        <button class="revive-btn" onclick="simulateAdAndRevive()">🎬 WATCH VIDEO TO REVIVE</button>
+        <button class="action-btn revive-btn" onclick="simulateAdAndRevive()">🎬 WATCH VIDEO TO REVIVE</button>
         <button style="background:none; border:none; color:#aaa; margin-top:15px; cursor:pointer; font-size: 14px;" onclick="restartGame()">Restart (Reset Score)</button>
     </div>
+
     <script>
         const tg = window.Telegram.WebApp; if (tg) tg.expand();
         const player = document.getElementById('player');
         const container = document.getElementById('game-container');
         const scoreDisplay = document.getElementById('score-display');
+        const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalScoreDisplay = document.getElementById('final-score');
-        let playerX = 50, score = 0, gameActive = true, asteroides = [], gameLoopInterval, spawnInterval;
+        let playerX = 50, score = 0, gameActive = false, asteroides = [], gameLoopInterval, spawnInterval;
 
         document.getElementById('left-btn').addEventListener('click', () => { if (!gameActive) return; if (playerX > 15) playerX -= 15; updatePlayer(); triggerHaptic(); });
         document.getElementById('right-btn').addEventListener('click', () => { if (!gameActive) return; if (playerX < 85) playerX += 15; updatePlayer(); triggerHaptic(); });
         function updatePlayer() { player.style.left = playerX + '%'; }
         function triggerHaptic() { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
+
+        function startGameOfficial() {
+            startScreen.style.display = 'none';
+            player.style.display = 'block';
+            playerX = 50; updatePlayer();
+            gameActive = true; score = 0; scoreDisplay.textContent = '0';
+            gameLoopInterval = setInterval(updateGame, 50);
+            spawnInterval = setInterval(createAsteroid, 900);
+            triggerHaptic();
+        }
 
         function createAsteroid() {
             if (!gameActive) return;
@@ -74,7 +97,6 @@
         }
 
         function simulateAdAndRevive() {
-            alert("Loading Adsgram Rewarded Video Ad (15s)... 🎬");
             gameOverScreen.style.display = 'none'; asteroides.forEach(a => a.remove()); asteroides = [];
             playerX = 50; updatePlayer(); gameActive = true;
             gameLoopInterval = setInterval(updateGame, 50); spawnInterval = setInterval(createAsteroid, 900);
@@ -85,9 +107,6 @@
             playerX = 50; updatePlayer(); gameActive = true;
             gameLoopInterval = setInterval(updateGame, 50); spawnInterval = setInterval(createAsteroid, 900);
         }
-
-        gameLoopInterval = setInterval(updateGame, 50);
-        spawnInterval = setInterval(createAsteroid, 900);
     </script>
 </body>
 </html>
